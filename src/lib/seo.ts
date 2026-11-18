@@ -4,5 +4,8 @@ export function safeJsonLd(data: unknown): string {
     .replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 }
 
-export const siteUrl = () => (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export const siteUrl = () =>
+  (process.env.SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") ||
+    "http://localhost:3000").replace(/\/$/, "");
 export const absUrl = (path: string) => (path.startsWith("http") ? path : `${siteUrl()}${path.startsWith("/") ? "" : "/"}${path}`);

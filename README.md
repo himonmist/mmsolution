@@ -43,7 +43,7 @@ src/lib/security/    password, tokens, rate-limit, sanitize, csv, upload, origin
 src/lib/services/    auth, inquiries, content, media, chatbot, activity  (business logic, unit-tested)
 tests/               unit/ integration/ e2e/
 deploy/              nginx, entrypoint, backup script
-docs/                ARCHITECTURE · SECURITY · DEPLOYMENT · ADMIN_GUIDE
+docs/                ARCHITECTURE · SECURITY · DEPLOYMENT · VERCEL · ADMIN_GUIDE
 ```
 
 ## Brand assets

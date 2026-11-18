@@ -14,11 +14,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
-  output: "standalone",
+  // Vercel builds its own output; standalone is for Docker/VPS.
+  output: process.env.VERCEL ? undefined : "standalone",
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [420, 640, 828, 1080, 1440, 1920],
     minimumCacheTTL: 60 * 60 * 24 * 7,
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
   experimental: { serverActions: { bodySizeLimit: "10mb" } },
   async headers() {

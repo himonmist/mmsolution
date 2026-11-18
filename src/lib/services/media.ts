@@ -25,11 +25,19 @@ export async function processImageUpload(buf: Buffer, originalName: string): Pro
     const out = await img.resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true });
     const year = String(new Date().getFullYear());
     const name = randomBytes(16).toString("hex").slice(0, 24) + ".webp";
-    const dir = path.join(uploadRoot(), year);
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, name), out.data, { mode: 0o644 });
     const display = path.basename(originalName || "image").replace(/[^\w.\- ]/g, "").slice(0, 120) || "image";
-    return { ok: true, url: `/uploads/${year}/${name}`, filename: display, mimeType: "image/webp", sizeBytes: out.info.size, width: out.info.width, height: out.info.height };
+    let url = `/uploads/${year}/${name}`;
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      // Serverless hosting (Vercel): persist to Vercel Blob object storage.
+      const { put } = await import("@vercel/blob");
+      const blob = await put(`uploads/${year}/${name}`, out.data, { access: "public", contentType: "image/webp", addRandomSuffix: false });
+      url = blob.url;
+    } else {
+      const dir = path.join(uploadRoot(), year);
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, name), out.data, { mode: 0o644 });
+    }
+    return { ok: true, url, filename: display, mimeType: "image/webp", sizeBytes: out.info.size, width: out.info.width, height: out.info.height };
   } catch {
     return { ok: false, error: "The image appears to be corrupt." };
   }
