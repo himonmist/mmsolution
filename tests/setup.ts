@@ -6,4 +6,4 @@ if (existsSync(".env.test")) {
     if (m) process.env[m[1]] = m[2];
   }
 }
-process.env.NODE_ENV ??= "test";
+(process.env as Record<string, string>).NODE_ENV ??= "test";
