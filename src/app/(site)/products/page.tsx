@@ -37,8 +37,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: SP 
         </form>
       </PageHero>
       <section className="bg-mist py-12 md:py-16">
-        <div className="container-x grid gap-8 lg:grid-cols-[260px_1fr]">
-          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <div className="container-x grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
+          <aside className="min-w-0 space-y-6 lg:sticky lg:top-24 lg:self-start">
             <div className="card p-4">
               <p className="mb-2 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-widest text-slate"><SlidersHorizontal className="h-3.5 w-3.5" />Categories</p>
               <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:block lg:space-y-0.5">

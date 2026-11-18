@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:test:prepare": "dotenv -e .env.test -- prisma migrate deploy",
+    "db:test:prepare": "DATABASE_URL=\"postgresql://mm:mm_dev_pw@localhost:5432/mmsolution_test?schema=public\" prisma migrate deploy",
     "render:studio": "node scripts/render-studio.mjs"
   },
   "dependencies": {

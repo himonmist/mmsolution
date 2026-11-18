@@ -2,7 +2,8 @@ import { z } from "zod";
 import { SLUG_RE } from "./slug";
 
 const text = (max: number) => z.string().trim().max(max);
-const optText = (max: number) => z.string().trim().max(max).optional().or(z.literal("").transform(() => undefined));
+const blankToUndef = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
+const optText = (max: number) => z.preprocess(blankToUndef, z.string().trim().max(max).optional());
 const email = z.string().trim().toLowerCase().max(160).email();
 const phone = z.string().trim().max(24).regex(/^\+?[0-9][0-9\s\-()]{6,22}$/, "Invalid phone number");
 
@@ -15,7 +16,7 @@ export const inquirySchema = z.object({
   name: text(120).min(2),
   company: optText(160),
   email,
-  phone: phone.optional().or(z.literal("").transform(() => undefined)),
+  phone: z.preprocess(blankToUndef, phone.optional()),
   productId: optText(40),
   productName: optText(200),
   quantity: z.coerce.number().int().min(1).max(100_000).optional(),
@@ -31,7 +32,7 @@ const slug = z.string().trim().max(96).regex(SLUG_RE, "Use lowercase letters, nu
 
 export const productSchema = z.object({
   name: text(200).min(1),
-  slug: slug.optional(),
+  slug: z.preprocess(blankToUndef, slug.optional()),
   modelNumber: optText(120),
   shortDescription: optText(400),
   description: optText(50_000),

@@ -54,6 +54,16 @@ describe("product management", () => {
   });
 });
 
+describe("empty optional relations from forms", () => {
+  it("stores no brand / no parent instead of an invalid foreign key", async () => {
+    const { actor, cat } = await setup();
+    const p = await saveProduct(actor, null, { name: "No Brand", categoryId: cat.id, brandId: "" });
+    expect(p.brandId).toBeNull();
+    const c = await saveEntity({ ...actor, role: "admin" }, "categories", null, { name: "Top", parentId: "" });
+    expect(c.parentId).toBeNull();
+  });
+});
+
 describe("generic entities", () => {
   it("creates a brand with a validated website url", async () => {
     const { actor } = await setup();

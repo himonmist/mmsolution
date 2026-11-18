@@ -17,10 +17,11 @@ export const assetUrl = z
   .trim()
   .max(500)
   .refine((u) => /^\/(uploads|media|brand)\/[\w\-./]+$/.test(u) && !u.includes("..") || /^https:\/\/[^\s"'<>]+$/.test(u), "Invalid image URL");
-const optAsset = assetUrl.optional().or(z.literal("").transform(() => undefined));
-const optStr = (max: number) => z.string().trim().max(max).optional().or(z.literal("").transform(() => undefined));
+const blank = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
+const optAsset = z.preprocess(blank, assetUrl.optional());
+const optStr = (max: number) => z.preprocess(blank, z.string().trim().max(max).optional());
 const httpUrl = z.string().trim().max(300).regex(/^https?:\/\/[^\s"'<>]+$/, "Must be an http(s) URL");
-const optSlug = z.string().trim().max(96).regex(SLUG_RE).optional().or(z.literal("").transform(() => undefined));
+const optSlug = z.preprocess(blank, z.string().trim().max(96).regex(SLUG_RE).optional());
 const bool = z.boolean().default(false);
 const order = z.coerce.number().int().min(-100000).max(100000).default(0);
 const stringList = (n: number, max = 200) => z.array(z.string().trim().min(1).max(max)).max(n).default([]);
@@ -73,10 +74,12 @@ export async function deleteProduct(actor: Actor, id: string) {
 
 // ───────────── Generic entities ─────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (args: any) => Promise<any>;
 type EntityDef = {
   perm: Permission;
   label: string;
-  delegate: () => { create: Function; update: Function; delete: Function; findFirst: Function };
+  delegate: () => { create: AnyFn; update: AnyFn; delete: AnyFn; findFirst: AnyFn };
   schema: z.ZodObject<z.ZodRawShape>;
   slugFrom?: string;
   rich?: string[];
@@ -92,7 +95,7 @@ export const ENTITIES = {
   brands: {
     perm: "brands.write", label: "Brand", delegate: () => prisma.brand, slugFrom: "name", plain: ["name", "description"],
     schema: z.object({ name: z.string().trim().min(1).max(80), slug: optSlug, logo: optAsset, description: optStr(500),
-      websiteUrl: httpUrl.optional().or(z.literal("").transform(() => undefined)), isActive: z.boolean().default(true), sortOrder: order }),
+      websiteUrl: z.preprocess(blank, httpUrl.optional()), isActive: z.boolean().default(true), sortOrder: order }),
   },
   services: {
     perm: "services.write", label: "Service", delegate: () => prisma.service, slugFrom: "title", rich: ["description"], plain: ["title", "summary"],

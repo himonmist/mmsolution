@@ -73,6 +73,11 @@ describe("product validation", () => {
     expect(productSchema.safeParse({ name: "HP", categoryId: "c1", slug: "../etc/passwd" }).success).toBe(false);
     expect(productSchema.safeParse({ name: "HP ProBook", categoryId: "c1", slug: "hp-probook" }).success).toBe(true);
   });
+  it("treats an empty slug from the form as 'generate one'", () => {
+    const r = productSchema.safeParse({ name: "X", categoryId: "c", slug: "", brandId: "", price: undefined });
+    expect(r.success).toBe(true);
+    if (r.success) { expect(r.data.slug).toBeUndefined(); expect(r.data.brandId).toBeUndefined(); }
+  });
   it("price must be non-negative when shown", () => {
     expect(productSchema.safeParse({ name: "X", categoryId: "c", priceMode: "SHOW_PRICE", price: -5 }).success).toBe(false);
   });

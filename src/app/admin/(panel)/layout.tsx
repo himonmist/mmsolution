@@ -25,6 +25,6 @@ const NAV: (NavItem & { perm: Permission })[] = [
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser("dashboard.view");
   const fresh = can(user.role, "inquiries.view") ? await prisma.inquiry.count({ where: { status: "NEW" } }) : 0;
-  const nav = NAV.filter((n) => can(user.role, n.perm)).map(({ perm: _p, ...n }) => (n.href === "/admin/inquiries" ? { ...n, badge: fresh } : n));
+  const nav = NAV.filter((n) => can(user.role, n.perm)).map((n): NavItem => ({ href: n.href, label: n.label, icon: n.icon, group: n.group, badge: n.href === "/admin/inquiries" ? fresh : undefined }));
   return <AdminShell nav={nav} user={{ name: user.name, email: user.email, roleLabel: ROLE_LABELS[user.role] }}>{children}</AdminShell>;
 }
