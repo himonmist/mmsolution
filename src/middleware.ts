@@ -31,7 +31,7 @@ export function middleware(req: NextRequest) {
     `base-uri 'self'`,
     `form-action 'self'`,
     `frame-ancestors 'none'`,
-    ...(dev ? [] : ["upgrade-insecure-requests"]),
+    ...((process.env.SITE_URL ?? "").startsWith("https://") ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 
   const requestHeaders = new Headers(req.headers);
