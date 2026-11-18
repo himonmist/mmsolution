@@ -188,8 +188,8 @@ function Rig({ progress, mobile, labels }: { progress: MutableRefObject<number>;
     // Camera: gentle parallax + pull back for the ecosystem
     const pull = seg(p, 0.66, 0.84);
     const z = (wide ? 8 : 10.5) + pull * (wide ? 3.2 : 4) + seg(p, 0.9, 1) * 1.5;
-    const mx = mobile ? 0 : state.pointer.x * 0.35, my = mobile ? 0 : state.pointer.y * 0.2;
-    camera.position.lerp(V(mx, 0.6 + my + pull * 0.8, z), Math.min(1, dt * 3));
+    const mx = mobile ? 0 : state.pointer.x * 0.35, py = mobile ? 0 : state.pointer.y * 0.2;
+    camera.position.lerp(V(mx, 0.6 + py + pull * 0.8, z), Math.min(1, dt * 3));
     camera.lookAt(0, -0.3 + pull * 0.85, 0);
     if (world.current) world.current.rotation.y = pull * 0.25 * Math.sin(t * 0.2);
   });
