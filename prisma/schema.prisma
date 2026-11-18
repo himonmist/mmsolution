@@ -1,0 +1,492 @@
+// MM Business Solution — relational schema (PostgreSQL)
+// Normalised core tables, FK constraints, indexes on every lookup path.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Auth & RBAC ─────────────────────────
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // super_admin, admin, content_editor, product_manager, inquiry_manager
+  name        String
+  description String?
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+
+  @@map("roles")
+}
+
+model Permission {
+  id    String           @id @default(cuid())
+  key   String           @unique // e.g. products.write
+  label String
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id                String               @id @default(cuid())
+  email             String               @unique
+  name              String
+  passwordHash      String
+  roleId            String
+  role              Role                 @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  isActive          Boolean              @default(true)
+  failedLoginCount  Int                  @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime             @default(now())
+  sessions          Session[]
+  resetTokens       PasswordResetToken[]
+  assignedInquiries Inquiry[]            @relation("InquiryAssignee")
+  inquiryNotes      InquiryNote[]
+  activityLogs      ActivityLog[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([roleId])
+  @@map("users")
+}
+
+/// Opaque server-side sessions. Only the SHA-256 of the token is stored.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ───────────────────────── Catalogue ─────────────────────────
+
+enum PriceMode {
+  SHOW_PRICE
+  CALL_FOR_PRICE
+  REQUEST_QUOTE
+  HIDE
+}
+
+enum Availability {
+  IN_STOCK
+  LIMITED
+  PRE_ORDER
+  ON_REQUEST
+  OUT_OF_STOCK
+  UNSPECIFIED
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String     @unique
+  description  String?
+  image        String?
+  icon         String?
+  parentId     String?
+  parent       Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[] @relation("CategoryTree")
+  products     Product[]
+  sortOrder    Int        @default(0)
+  isPublished  Boolean    @default(true)
+  translations Json? // { bn: { name, description } }
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([parentId])
+  @@index([isPublished, sortOrder])
+  @@map("product_categories")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  logo        String?
+  description String?
+  websiteUrl  String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("product_brands")
+}
+
+model Product {
+  id               String                 @id @default(cuid())
+  name             String
+  slug             String                 @unique
+  modelNumber      String?
+  shortDescription String?
+  description      String? // sanitised rich HTML
+  features         String[]               @default([])
+  categoryId       String
+  category         Category               @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brandId          String?
+  brand            Brand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  images           ProductImage[]
+  specifications   ProductSpecification[]
+  availability     Availability           @default(UNSPECIFIED)
+  priceMode        PriceMode              @default(REQUEST_QUOTE)
+  price            Decimal?               @db.Decimal(12, 2)
+  currency         String                 @default("BDT")
+  isFeatured       Boolean                @default(false)
+  isNewArrival     Boolean                @default(false)
+  isPublished      Boolean                @default(false)
+  isDemo           Boolean                @default(false) // illustrative sample content
+  sortOrder        Int                    @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  translations     Json?
+  inquiries        Inquiry[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isPublished, isFeatured])
+  @@index([isPublished, sortOrder])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+model ProductSpecification {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  group     String?
+  label     String
+  value     String
+  sortOrder Int     @default(0)
+
+  @@index([productId, sortOrder])
+  @@map("product_specifications")
+}
+
+// ───────────────────────── Services & Projects ─────────────────────────
+
+model Service {
+  id               String         @id @default(cuid())
+  title            String
+  slug             String         @unique
+  summary          String?
+  description      String?
+  icon             String?
+  image            String?
+  features         String[]       @default([])
+  images           ServiceImage[]
+  isPublished      Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  translations     Json?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("services")
+}
+
+model ServiceImage {
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  @@index([serviceId])
+  @@map("service_images")
+}
+
+model Project {
+  id                    String         @id @default(cuid())
+  title                 String
+  slug                  String         @unique
+  clientName            String? // only verified clients
+  category              String
+  summary               String?
+  description           String?
+  implementationDetails String?
+  technologies          String[]       @default([])
+  completedAt           DateTime?
+  coverImage            String?
+  images                ProjectImage[]
+  isPublished           Boolean        @default(false)
+  isDemo                Boolean        @default(false)
+  sortOrder             Int            @default(0)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@index([category])
+  @@map("projects")
+}
+
+model ProjectImage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  @@index([projectId])
+  @@map("project_images")
+}
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  clientName   String
+  designation  String?
+  organization String?
+  quote        String
+  image        String?
+  isPublished  Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("testimonials")
+}
+
+// ───────────────────────── Inquiries ─────────────────────────
+
+enum InquiryType {
+  GENERAL
+  PRODUCT
+  NETWORKING_PROJECT
+  CORPORATE_QUOTE
+}
+
+enum InquiryStatus {
+  NEW
+  IN_REVIEW
+  QUOTATION_SENT
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+model Inquiry {
+  id           String        @id @default(cuid())
+  type         InquiryType
+  status       InquiryStatus @default(NEW)
+  name         String
+  company      String?
+  email        String
+  phone        String?
+  productId    String?
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName  String?
+  quantity     Int?
+  subject      String?
+  message      String
+  meta         Json? // e.g. site count, budget range for project/quote forms
+  assigneeId   String?
+  assignee     User?         @relation("InquiryAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  notes        InquiryNote[]
+  ipHash       String? // salted hash, never raw IP
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([type])
+  @@index([assigneeId])
+  @@map("inquiries")
+}
+
+model InquiryNote {
+  id        String   @id @default(cuid())
+  inquiryId String
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([inquiryId])
+  @@map("inquiry_notes")
+}
+
+// ───────────────────────── Content ─────────────────────────
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Page {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  status         PublishStatus @default(DRAFT)
+  body           String? // sanitised rich HTML
+  sections       PageSection[]
+  seoTitle       String?
+  seoDescription String?
+  translations   Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("pages")
+}
+
+model PageSection {
+  id        String  @id @default(cuid())
+  pageId    String
+  page      Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  kind      String // text | image | cta | split
+  heading   String?
+  body      String?
+  image     String?
+  data      Json?
+  sortOrder Int     @default(0)
+
+  @@index([pageId, sortOrder])
+  @@map("page_sections")
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  placement   String // home_top, products_top ...
+  title       String
+  subtitle    String?
+  image       String?
+  ctaLabel    String?
+  ctaHref     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([placement, isActive])
+  @@map("banners")
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  url        String   @unique
+  filename   String
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  alt        String?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("media_library")
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  excerpt        String?
+  body           String?
+  coverImage     String?
+  category       String        @default("Insights")
+  status         PublishStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  translations   Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model NavigationMenu {
+  id        String           @id @default(cuid())
+  location  String // header | footer_quick | footer_legal
+  label     String
+  href      String
+  parentId  String?
+  parent    NavigationMenu?  @relation("NavTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  NavigationMenu[] @relation("NavTree")
+  sortOrder Int              @default(0)
+  isActive  Boolean          @default(true)
+
+  @@index([location, sortOrder])
+  @@map("navigation_menus")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // create | update | delete | login | login_failed | export ...
+  entityType String?
+  entityId   String?
+  summary    String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("activity_logs")
+}
