@@ -26,7 +26,8 @@ In the project → **Storage** tab:
 **Deployments → Redeploy** (or push to the branch). The build log shows `Applying migration…`, `Created super admin…`, `Seed complete.`
 Open `https://<project>.vercel.app` — CMS at `/admin`.
 
-After the first successful deploy, you can delete `SEED_ADMIN_PASSWORD` from Vercel (the seed never overwrites an existing admin) and change your password in the CMS.
+**`SEED_ADMIN_PASSWORD` is authoritative**: whenever it differs from the stored password, the next deploy sets the admin password to it, unlocks the account and signs out existing sessions. To change the admin password this way: edit the variable → **Redeploy**.
+If you later change the password inside the CMS, either update this variable to match or delete it — otherwise the next deploy resets the password back to the variable's value.
 
 ## Notes
 * **Upload size**: Vercel functions accept request bodies up to ~4.5 MB, so keep CMS images under 4 MB on Vercel (the app's own limit is 8 MB for VPS/Docker).

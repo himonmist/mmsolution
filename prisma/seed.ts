@@ -4,7 +4,7 @@
  * Run: npm run db:seed   (idempotent — safe to re-run)
  */
 import { PrismaClient } from "@prisma/client";
-import { hashPassword, checkPasswordPolicy } from "../src/lib/security/password";
+import { ensureSuperAdmin } from "../src/lib/services/auth";
 import { PERMISSIONS, ROLES, ROLE_LABELS, ROLE_PERMISSIONS } from "../src/lib/auth/rbac";
 
 const prisma = new PrismaClient();
@@ -106,16 +106,10 @@ async function main() {
     await prisma.rolePermission.createMany({ data: perms.map((p) => ({ roleId: role.id, permissionId: p.id })) });
   }
 
-  // First super admin
-  const email = (process.env.SEED_ADMIN_EMAIL ?? "").toLowerCase();
+  // First super admin — SEED_ADMIN_PASSWORD is authoritative (changing it in the host's env resets the password on next deploy)
+  const email = process.env.SEED_ADMIN_EMAIL ?? "";
   const password = process.env.SEED_ADMIN_PASSWORD ?? "";
-  if (email && password && !(await prisma.user.findUnique({ where: { email } }))) {
-    const pol = checkPasswordPolicy(password);
-    if (!pol.ok) throw new Error(`SEED_ADMIN_PASSWORD rejected: ${pol.reason}`);
-    const role = await prisma.role.findUniqueOrThrow({ where: { key: "super_admin" } });
-    await prisma.user.create({ data: { email, name: "Super Admin", passwordHash: await hashPassword(password), roleId: role.id } });
-    console.log(`Created super admin ${email}`);
-  }
+  if (email && password) console.log(`Super admin ${email}: ${await ensureSuperAdmin(email, password)}`);
 
   // Catalogue
   const catIds: Record<string, string> = {};

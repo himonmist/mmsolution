@@ -82,3 +82,32 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await logActivity(row.userId, "password_reset", "user", row.userId);
   return { ok: true };
 }
+
+/**
+ * Deploy-time admin bootstrap driven by SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD.
+ * The environment value is authoritative: if it differs from the stored password the
+ * account is updated, unlocked and all its sessions are revoked.
+ */
+export async function ensureSuperAdmin(email: string, password: string): Promise<"created" | "password_updated" | "unchanged"> {
+  const policy = checkPasswordPolicy(password);
+  if (!policy.ok) throw new Error(`SEED_ADMIN_PASSWORD rejected: ${policy.reason}`);
+  const role = await prisma.role.upsert({ where: { key: "super_admin" }, update: {}, create: { key: "super_admin", name: "Super Administrator" } });
+  const normalised = email.trim().toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email: normalised } });
+  if (!user) {
+    await prisma.user.create({ data: { email: normalised, name: "Super Admin", passwordHash: await hashPassword(password), roleId: role.id } });
+    return "created";
+  }
+  const matches = await verifyPassword(password, user.passwordHash);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      roleId: role.id, isActive: true, failedLoginCount: 0, lockedUntil: null,
+      ...(matches ? {} : { passwordHash: await hashPassword(password), passwordChangedAt: new Date() }),
+    },
+  });
+  if (matches) return "unchanged";
+  await prisma.session.deleteMany({ where: { userId: user.id } });
+  await logActivity(user.id, "password_reset", "user", user.id, "Password set from deployment environment");
+  return "password_updated";
+}
