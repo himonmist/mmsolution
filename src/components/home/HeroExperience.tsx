@@ -71,7 +71,7 @@ export function HeroExperience({ eyebrow, heading, description, primary, seconda
           const p = self.progress;
           progress.current = p;
           const o1 = 1 - smooth(clamp((p - 0.06) / 0.08));
-          setO(s1.current, o1, -p * 400);
+          setO(s1.current, o1, -Math.min(p, 0.14) * 260);
           const o2 = win(p, 0.2, 0.26, 0.42, 0.46); setO(s2.current, o2, (1 - o2) * 24);
           const o3 = win(p, 0.53, 0.58, 0.66, 0.7); setO(s3.current, o3, (1 - o3) * 24);
           const o4 = win(p, 0.72, 0.78, 0.93, 0.98); setO(s4.current, o4, (1 - o4) * 30);
@@ -102,15 +102,15 @@ export function HeroExperience({ eyebrow, heading, description, primary, seconda
   };
 
   const intro = (
-    <div ref={s1} className="relative z-10 flex h-full items-center max-md:bg-gradient-to-b max-md:from-ink/30 max-md:via-ink/75 max-md:to-transparent">
-      <div className="container-x pt-20 md:pt-0">
+    <div ref={s1} className="relative z-10 flex h-full flex-col overflow-hidden pb-12 pt-[96px] [mask-image:linear-gradient(to_bottom,transparent_72px,black_104px)] max-md:bg-gradient-to-b max-md:from-ink/30 max-md:via-ink/75 max-md:to-transparent">
+      <div className="container-x my-auto">
         <div className="max-w-xl md:max-w-[40rem] lg:max-w-[36rem] xl:max-w-[40rem]">
           <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="eyebrow eyebrow-dot !text-white/70">{eyebrow}</motion.p>
           <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
-            className="display mt-5 text-[2.6rem] text-white sm:text-6xl lg:text-[4.4rem]">
+            className="display mt-5 text-[clamp(2.2rem,min(10vw,7.2vh),2.6rem)] text-white sm:text-[clamp(2.4rem,min(7vw,8.5vh),3.75rem)] lg:text-[clamp(2.6rem,min(5.2vw,9vh),4.4rem)]">
             <span className="text-gradient">{heading}</span>
           </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="mt-6 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg">
+          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="mt-6 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg [@media(max-height:620px)]:mt-4 [@media(max-height:620px)]:line-clamp-3 [@media(max-height:620px)]:text-[15px]">
             {description}
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mt-8 flex flex-wrap gap-3">
