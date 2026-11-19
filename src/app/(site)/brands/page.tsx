@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { prisma } from "@/lib/db";
 import { PageHero } from "@/components/site/PageHero";
 
@@ -15,8 +15,8 @@ export default async function BrandsPage() {
         <div className="container-x grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {brands.map((b) => (
             <Link key={b.id} href={`/products?brand=${b.slug}`} className="card group flex flex-col items-center p-8 text-center transition hover:-translate-y-1 hover:shadow-lift">
-              <div className="grid h-16 place-items-center">{b.logo ? <Image src={b.logo} alt={b.name} width={140} height={48} className="max-h-12 w-auto object-contain" /> : <span className="font-display text-2xl font-bold text-navy group-hover:text-brand-blue">{b.name}</span>}</div>
-              <p className="mt-3 text-sm text-slate">{b._count.products} products</p>
+              <div className="grid h-16 place-items-center"><BrandMark name={b.name} slug={b.slug} logo={b.logo} size="lg" /></div>
+              <p className="mt-3 text-sm text-slate">{b._count.products} {b._count.products === 1 ? "product" : "products"}</p>
             </Link>
           ))}
         </div>
