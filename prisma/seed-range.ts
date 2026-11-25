@@ -32,6 +32,22 @@ type P = {
   features: string[]; specs: [string, string, string?][]; featured?: boolean; isNew?: boolean;
 };
 
+/** Official Canon product photos (asia.canon), re-encoded locally. Shown as the main images for these products. */
+const CANON_PHOTOS: Record<string, { url: string; alt: string }[]> = {
+  "canon-laser-printer": [
+    { url: "/media/canon/imageclass-lbp6130n.webp", alt: "Canon imageCLASS LBP6130n laser printer" },
+    { url: "/media/canon/imageclass-mf3020w.webp", alt: "Canon imageCLASS MF3020w laser multifunction printer" },
+  ],
+  "canon-ink-tank-printer": [
+    { url: "/media/canon/pixma-g3010.webp", alt: "Canon PIXMA G3010 ink tank printer" },
+    { url: "/media/canon/pixma-g3010-front.webp", alt: "Canon PIXMA G3010 front view with ink tanks" },
+  ],
+  "canon-photocopier-imagerunner": [
+    { url: "/media/canon/imagerunner-advance-dx-c3935i.webp", alt: "Canon imageRUNNER ADVANCE DX C3935i multifunction copier" },
+    { url: "/media/canon/imagerunner-advance-dx-c3935i-finisher.webp", alt: "Canon imageRUNNER ADVANCE DX C3935i with booklet finisher" },
+  ],
+};
+
 const toner = (code: string, colour: string, fits: string, models: string[]): P => ({
   name: `Canon ${code} Toner`, slug: `canon-${code.toLowerCase()}-toner`, brand: "canon", cat: "toner-cartridges", model: code,
   img: colour.includes("Cyan") ? "toner-set" : "toner", gallery: colour.includes("Cyan") ? ["toner"] : undefined,
@@ -150,10 +166,19 @@ export async function seedRange(prisma: PrismaClient) {
         categoryId: cats[p.cat], brandId: brands[p.brand] ?? null, isFeatured: !!p.featured, isNewArrival: !!p.isNew, isPublished: true, isDemo: false,
         sortOrder: 50 + i, availability: "ON_REQUEST", priceMode: "REQUEST_QUOTE",
         seoTitle: p.name.slice(0, 70), seoDescription: p.short.slice(0, 170),
-        images: { create: [p.img, ...(p.gallery ?? [])].map((k, j) => ({ url: S(k), alt: p.name, sortOrder: j })) },
+        images: { create: (CANON_PHOTOS[p.slug] ?? [p.img, ...(p.gallery ?? [])].map((k) => ({ url: S(k), alt: p.name }))).map((im, j) => ({ ...im, sortOrder: j })) },
         specifications: { create: p.specs.map(([label, value, group], j) => ({ label, value, group, sortOrder: j })) },
       },
     });
+  }
+  // Upgrade existing products from 3D renders to official photos — never touches images uploaded in the CMS.
+  for (const [slug, photos] of Object.entries(CANON_PHOTOS)) {
+    const prod = await prisma.product.findUnique({ where: { slug }, include: { images: true } });
+    if (!prod || !prod.images.every((im) => im.url.startsWith("/media/studio/"))) continue;
+    await prisma.$transaction([
+      prisma.productImage.deleteMany({ where: { productId: prod.id } }),
+      prisma.productImage.createMany({ data: photos.map((im, j) => ({ ...im, productId: prod.id, sortOrder: j })) }),
+    ]);
   }
   const maxSvc = (await prisma.service.aggregate({ _max: { sortOrder: true } }))._max.sortOrder ?? 0;
   for (const [i, s] of SERVICES.entries()) {

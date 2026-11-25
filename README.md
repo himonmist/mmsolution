@@ -51,6 +51,13 @@ docs/                ARCHITECTURE · SECURITY · DEPLOYMENT · VERCEL · ADMIN_G
 `public/brand/logo.png` / `logo-reverse.png` were extracted from the supplied screenshot (a share-icon overlay was removed; the reverse version recolours the navy wordmark to white for dark backgrounds). **Replace them with the original vector/PNG logo files before launch.**
 Product photos in `public/media/` are the three images supplied. `public/media/studio/*.webp` are renders of the site's own procedural 3D models (`npm run render:studio` with the dev server running).
 
+## Third-party brand assets
+
+* Brand marks: Simple Icons (CC0) for most brands; Adobe's mark and Canon's wordmark from Wikimedia Commons (plain text logos, so not covered by copyright). All are trademarks of their owners.
+* `public/media/canon/*.webp`: official product photos from Canon South & Southeast Asia (asia.canon), re-encoded locally.
+* Canon NPG toner and cartridge photos are not published on Canon's public site, so those products use our 3D renders. Replace them in the CMS with your own photos or Canon dealer-kit images.
+* Use these only while MM Business Solution supplies the brand, and follow each brand's partner guidelines.
+
 ## Content honesty
 
 Seeded products and projects are flagged **Sample** on the site, carry no prices, specifications or availability, and testimonials are empty. Statistics show only live catalogue counts unless the team enters verified figures. Replace or unpublish sample content and confirm the brand list before launch — see `docs/ADMIN_GUIDE.md`.

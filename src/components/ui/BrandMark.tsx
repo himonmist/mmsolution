@@ -10,7 +10,7 @@ export function BrandMark({ name, slug, logo, size = "md" }: { name: string; slu
   const mark = logo ? (
     <Image src={logo} alt="" width={96} height={96} className={`${box} object-contain`} />
   ) : icon ? (
-    <svg viewBox="0 0 24 24" className={box} role="img" aria-hidden fill={icon.hex}><path d={icon.path} /></svg>
+    <svg viewBox={icon.viewBox ?? "0 0 24 24"} className={icon.wide ? (size === "lg" ? "h-6 w-auto" : "h-[18px] w-auto") : box} role="img" aria-hidden fill={icon.hex}>{(Array.isArray(icon.path) ? icon.path : [icon.path]).map((d, i) => <path key={i} d={d} />)}</svg>
   ) : (
     <span className={`${box} grid place-items-center rounded-xl bg-gradient-to-br from-navy to-brand-blue font-display text-sm font-bold text-white`} aria-hidden>
       {(name.length <= 3 ? name : name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2)).toUpperCase()}

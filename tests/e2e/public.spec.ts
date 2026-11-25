@@ -94,3 +94,15 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
     expect(errors).toEqual([]);
   });
 }
+
+test("official Canon product photos and Adobe/Canon logos", async ({ page }) => {
+  for (const [slug, file] of [["canon-laser-printer", "imageclass-lbp6130n"], ["canon-ink-tank-printer", "pixma-g3010"], ["canon-photocopier-imagerunner", "imagerunner-advance-dx-c3935i"]]) {
+    await page.goto(`/products/${slug}`);
+    await expect(page.locator(`img[src*="${file}"]`).first()).toBeVisible();
+  }
+  await page.goto("/brands");
+  for (const name of ["Adobe", "Canon"]) {
+    const card = page.locator("a", { hasText: new RegExp(`^${name}`) }).first();
+    await expect(card.locator("svg[role=img] path").first()).toBeAttached();
+  }
+});
