@@ -5,6 +5,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { ensureSuperAdmin } from "../src/lib/services/auth";
+import { seedRange } from "./seed-range";
 import { PERMISSIONS, ROLES, ROLE_LABELS, ROLE_PERMISSIONS } from "../src/lib/auth/rbac";
 
 const prisma = new PrismaClient();
@@ -149,6 +150,8 @@ async function main() {
       create: { ...s, sortOrder: i, description: `<p>${s.summary}</p><h2>What's included</h2><ul>${s.features.map((f) => `<li>${f}</li>`).join("")}</ul><h2>How we work</h2><p>Every engagement starts with understanding your requirements, followed by a recommended design, supply, professional installation and long-term support.</p>` },
     });
   }
+
+  await seedRange(prisma);
 
   for (const [i, [title, category, cover, tech]] of PROJECTS.entries()) {
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");

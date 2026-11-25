@@ -15,7 +15,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: SP 
   const sp = await searchParams;
   const q = { q: one(sp.q), category: one(sp.category), brand: one(sp.brand), sort: one(sp.sort), filter: one(sp.filter), page: Number(one(sp.page)) || 1 };
   const [cats, brands, res] = await Promise.all([getCategories(), getBrands(), searchProducts(q)]);
-  const activeCat = cats.find((c) => c.slug === q.category);
+  const activeParent = cats.find((c) => c.slug === q.category || c.children.some((k) => k.slug === q.category));
+  const activeCat = activeParent?.slug === q.category ? activeParent : activeParent?.children.find((k) => k.slug === q.category);
   const iconFor = Object.fromEntries(cats.map((c) => [c.slug, c.icon]));
   const href = (patch: Record<string, string | undefined>) => {
     const u = new URLSearchParams();
@@ -28,7 +29,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: SP 
     <>
       <PageHero eyebrow="Product catalogue" title={activeCat ? activeCat.name : "Every product your business runs on."}
         body={activeCat?.description ?? "Browse by category or brand, then send an inquiry — our team confirms specifications, availability and pricing in a formal quotation."}
-        crumbs={activeCat ? [["Products", "/products"], [activeCat.name, href({ category: activeCat.slug })]] : [["Products", "/products"]]}>
+        crumbs={activeCat ? [["Products", "/products"], ...(activeParent && activeParent.slug !== activeCat.slug ? [[activeParent.name, href({ category: activeParent.slug })] as [string, string]] : []), [activeCat.name, href({ category: activeCat.slug })]] : [["Products", "/products"]]}>
         <form action="/products" className="mt-8 flex max-w-xl items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lift">
           <Search className="h-5 w-5 text-slate" />
           {q.category && <input type="hidden" name="category" value={q.category} />}
@@ -46,7 +47,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: SP 
                 {cats.map((c) => (
                   <li key={c.id}><Link href={href({ category: c.slug })} className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2 py-2 text-sm ${q.category === c.slug ? "bg-ink font-bold text-white" : "text-navy hover:bg-mist"}`}>
                     <Icon name={c.icon} className="h-4 w-4 shrink-0 opacity-70" /><span className="flex-1">{c.name}</span><span className="text-xs opacity-60">{c._count.products}</span>
-                  </Link></li>
+                  </Link>
+                  {activeParent?.id === c.id && c.children.length > 0 && (
+                    <ul className="hidden border-l border-line py-1 pl-3 ml-4 lg:block">
+                      {c.children.map((k) => (
+                        <li key={k.id}><Link href={href({ category: k.slug })} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] ${q.category === k.slug ? "font-bold text-brand-blue" : "text-navy hover:bg-mist"}`}><span className="flex-1">{k.name}</span><span className="text-xs opacity-60">{k._count.products}</span></Link></li>
+                      ))}
+                    </ul>
+                  )}
+                  </li>
                 ))}
               </ul>
             </div>

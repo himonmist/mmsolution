@@ -31,7 +31,8 @@ function useMats() {
 }
 
 /** Brand gradient "wallpaper" rendered to a canvas texture — no external images. */
-function useScreenTexture(variant: "brand" | "dash" = "brand") {
+type ScreenVariant = "brand" | "dash" | "cad" | "creative";
+function useScreenTexture(variant: ScreenVariant = "brand") {
   return useMemo(() => {
     if (typeof document === "undefined") return null;
     const c = document.createElement("canvas");
@@ -51,6 +52,33 @@ function useScreenTexture(variant: "brand" | "dash" = "brand") {
       const r = g.createRadialGradient(560, 300, 10, 560, 300, 360);
       r.addColorStop(0, "rgba(120,190,255,0.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
       g.fillStyle = r; g.fillRect(0, 0, 1024, 640);
+    } else if (variant === "cad") {
+      // Generic CAD workspace: blueprint grid + wireframe building (no trademarks)
+      g.fillStyle = "#0b1a2e"; g.fillRect(0, 0, 1024, 640);
+      g.strokeStyle = "rgba(90,160,255,0.18)"; g.lineWidth = 1;
+      for (let x = 0; x < 1024; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 640); g.stroke(); }
+      for (let y = 0; y < 640; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(1024, y); g.stroke(); }
+      g.fillStyle = "#13263f"; g.fillRect(0, 0, 1024, 44); g.fillRect(0, 44, 70, 596);
+      g.strokeStyle = "#e9f2ff"; g.lineWidth = 3;
+      const iso = (x: number, y: number, z: number): [number, number] => [560 + (x - z) * 0.87, 380 + (x + z) * 0.5 - y];
+      const box = (x: number, z: number, w: number, d: number, h: number) => {
+        const pts = [[x, 0, z], [x + w, 0, z], [x + w, 0, z + d], [x, 0, z + d]];
+        for (const yy of [0, h]) { g.beginPath(); pts.forEach(([a, , c], i) => { const [px, py] = iso(a, yy, c); if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); g.stroke(); }
+        for (const [a, , c] of pts) { const [x1, y1] = iso(a, 0, c), [x2, y2] = iso(a, h, c); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+      };
+      box(-160, -120, 220, 160, 230); box(80, -60, 140, 140, 140); box(-140, 60, 120, 110, 90);
+      g.strokeStyle = "#ED1018"; g.setLineDash([10, 8]); g.beginPath(); g.moveTo(300, 560); g.lineTo(820, 560); g.stroke(); g.setLineDash([]);
+    } else if (variant === "creative") {
+      // Generic creative-suite layout: canvas artwork, layers and colour swatches (no trademarks)
+      g.fillStyle = "#1d1f24"; g.fillRect(0, 0, 1024, 640);
+      g.fillStyle = "#2a2d34"; g.fillRect(0, 0, 1024, 40); g.fillRect(0, 40, 64, 600); g.fillRect(820, 40, 204, 600);
+      const art = g.createLinearGradient(110, 80, 780, 600);
+      art.addColorStop(0, "#ff5f6d"); art.addColorStop(0.5, "#7b4dff"); art.addColorStop(1, "#1fb6ff");
+      g.fillStyle = art; g.fillRect(110, 80, 670, 500);
+      g.fillStyle = "rgba(255,255,255,0.9)"; g.beginPath(); g.arc(330, 300, 110, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "rgba(10,10,30,0.55)"; g.beginPath(); g.moveTo(420, 560); g.lineTo(640, 220); g.lineTo(780, 560); g.closePath(); g.fill();
+      ["#ED1018", "#FFB020", "#2BD46B", "#3B9BFF", "#B44DFF", "#ffffff"].forEach((c, i) => { g.fillStyle = c; g.fillRect(840 + (i % 3) * 58, 70 + Math.floor(i / 3) * 58, 46, 46); });
+      for (let i = 0; i < 6; i++) { g.fillStyle = i === 1 ? "#3b6fd8" : "#353944"; g.fillRect(840, 220 + i * 52, 164, 42); }
     } else {
       g.fillStyle = "rgba(255,255,255,0.06)";
       for (let i = 0; i < 4; i++) g.fillRect(40 + i * 245, 40, 220, 120);
@@ -117,7 +145,7 @@ export const Laptop = forwardRef<THREE.Group, G & { open?: number; tone?: "silve
 );
 
 // ───────────────────────── Monitor ─────────────────────────
-export const Monitor = forwardRef<THREE.Group, G & { variant?: "brand" | "dash" }>(function Monitor({ variant = "dash", ...props }, ref) {
+export const Monitor = forwardRef<THREE.Group, G & { variant?: ScreenVariant }>(function Monitor({ variant = "dash", ...props }, ref) {
   const m = useMats();
   const tex = useScreenTexture(variant);
   return (
@@ -449,6 +477,79 @@ export function Floating({ children, speed = 1, amp = 0.06 }: { children: ReactN
   });
   return <group ref={ref}>{children}</group>;
 }
+
+// ───────────────────────── Floor photocopier / MFP ─────────────────────────
+export const Photocopier = forwardRef<THREE.Group, G>(function Photocopier(props, ref) {
+  const m = useMats();
+  return (
+    <group ref={ref} {...props}>
+      {/* cabinet + paper drawers */}
+      <RoundedBox args={[1.5, 1.0, 1.25]} radius={0.04} smoothness={4} position={[0, 0.5, 0]} material={m.white} castShadow />
+      {[0, 1, 2].map((i) => (
+        <group key={i} position={[0, 0.2 + i * 0.27, 0.628]}>
+          <mesh material={m.white}><boxGeometry args={[1.38, 0.22, 0.01]} /></mesh>
+          <mesh position={[0, 0.06, 0.008]} material={m.graphite}><boxGeometry args={[0.4, 0.03, 0.01]} /></mesh>
+        </group>
+      ))}
+      {/* engine body */}
+      <RoundedBox args={[1.5, 0.55, 1.25]} radius={0.04} smoothness={4} position={[0, 1.3, 0]} material={m.white} castShadow />
+      {/* output tray gap */}
+      <mesh position={[0.1, 1.08, 0.35]} material={m.graphite}><boxGeometry args={[1.1, 0.1, 0.6]} /></mesh>
+      {/* scanner + document feeder */}
+      <RoundedBox args={[1.5, 0.12, 1.2]} radius={0.03} position={[0, 1.64, -0.02]} material={m.white} />
+      <RoundedBox args={[1.1, 0.16, 0.85]} radius={0.04} position={[-0.1, 1.78, -0.1]} material={m.graphite} />
+      <mesh position={[-0.1, 1.87, -0.1]} material={m.white}><boxGeometry args={[0.8, 0.01, 0.6]} /></mesh>
+      {/* control panel */}
+      <group position={[0.55, 1.72, 0.55]} rotation={[-0.6, 0, 0]}>
+        <mesh material={m.black}><boxGeometry args={[0.45, 0.03, 0.3]} /></mesh>
+        <mesh position={[0, 0.017, 0]} material={m.blueGlow}><boxGeometry args={[0.36, 0.002, 0.22]} /></mesh>
+      </group>
+      <mesh position={[-0.62, 1.3, 0.628]} material={m.greenGlow}><boxGeometry args={[0.04, 0.04, 0.004]} /></mesh>
+      {/* casters */}
+      {[[-0.65, -0.55], [0.65, -0.55], [-0.65, 0.55], [0.65, 0.55]].map(([x, z], i) => <mesh key={i} position={[x, -0.02, z]} material={m.black}><sphereGeometry args={[0.04, 12, 12]} /></mesh>)}
+    </group>
+  );
+});
+
+// ───────────────────────── Copier toner bottle(s) ─────────────────────────
+const TONER_BANDS = ["#111318", "#00a3e0", "#e6007e", "#ffd400"];
+export const TonerBottle = forwardRef<THREE.Group, G & { band?: string }>(function TonerBottle({ band = TONER_BANDS[0], ...props }, ref) {
+  const m = useMats();
+  const bandMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: band, metalness: 0.2, roughness: 0.35, clearcoat: 0.8 }), [band]);
+  return (
+    <group ref={ref} {...props}>
+      <mesh rotation={[0, 0, Math.PI / 2]} material={m.white} castShadow><cylinderGeometry args={[0.16, 0.16, 1.6, 48]} /></mesh>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[0.55, 0, 0]} material={bandMat}><cylinderGeometry args={[0.163, 0.163, 0.28, 48]} /></mesh>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[-0.86, 0, 0]} material={m.graphite}><cylinderGeometry args={[0.12, 0.14, 0.14, 32]} /></mesh>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[0.84, 0, 0]} material={m.graphite}><cylinderGeometry args={[0.15, 0.15, 0.08, 32]} /></mesh>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <mesh key={i} rotation={[0, 0, Math.PI / 2]} position={[-0.6 + i * 0.16, 0, 0]} material={m.alu}><torusGeometry args={[0.161, 0.006, 6, 48]} /></mesh>
+      ))}
+    </group>
+  );
+});
+
+export const TonerSet = forwardRef<THREE.Group, G>(function TonerSet(props, ref) {
+  return (
+    <group ref={ref} {...props}>
+      {TONER_BANDS.map((c, i) => <TonerBottle key={c} band={c} position={[0, 0.17 + (i % 2) * 0.0, -0.6 + i * 0.4]} />)}
+    </group>
+  );
+});
+
+// ───────────────────────── Printer cartridge ─────────────────────────
+export const Cartridge = forwardRef<THREE.Group, G>(function Cartridge(props, ref) {
+  const m = useMats();
+  return (
+    <group ref={ref} {...props}>
+      <RoundedBox args={[1.3, 0.38, 0.5]} radius={0.06} smoothness={4} position={[0, 0.19, 0]} material={m.black} castShadow />
+      <RoundedBox args={[0.5, 0.3, 0.52]} radius={0.05} position={[0.55, 0.3, 0]} material={m.graphite} />
+      <mesh position={[0, 0.06, 0.252]} material={m.alu}><boxGeometry args={[1.0, 0.04, 0.01]} /></mesh>
+      <mesh position={[-0.35, 0.3, 0.252]} material={m.redGlow}><boxGeometry args={[0.3, 0.06, 0.004]} /></mesh>
+      <mesh position={[-0.66, 0.2, 0]} rotation={[0, 0, Math.PI / 2]} material={m.graphite}><cylinderGeometry args={[0.08, 0.08, 0.06, 24]} /></mesh>
+    </group>
+  );
+});
 
 export const MODEL_KEYS = ["laptop", "laptop-graphite", "desktop", "tower", "monitor", "components", "printer", "accesspoint", "server", "rack", "switch", "router", "camera", "accessories", "ups", "shield"] as const;
 export type ModelKey = (typeof MODEL_KEYS)[number];

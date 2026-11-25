@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer, ContactShadows } from "@react-three/drei";
-import { Laptop, Monitor, Tower, Keyboard, Mouse, ServerRack, RackServer, Switch, Router, AccessPoint, Camera, Printer, Ups, Components, Shield, BRAND } from "./models";
+import { Laptop, Monitor, Tower, Keyboard, Mouse, ServerRack, RackServer, Switch, Router, AccessPoint, Camera, Printer, Ups, Components, Shield, Photocopier, TonerBottle, TonerSet, Cartridge, BRAND } from "./models";
 import type { ReactNode } from "react";
 
 const SHOTS: Record<string, { node: ReactNode; cam: [number, number, number]; target?: [number, number, number]; fov?: number }> = {
@@ -22,6 +22,12 @@ const SHOTS: Record<string, { node: ReactNode; cam: [number, number, number]; ta
   accessories: { node: <group rotation={[0, -0.3, 0]}><Keyboard /><Mouse position={[1.0, 0, 0.1]} /></group>, cam: [0, 1.5, 2.6], target: [0.2, 0, 0] },
   ups: { node: <Ups rotation={[0, -0.6, 0]} />, cam: [0, 1.2, 3.2], target: [0, 0.55, 0] },
   shield: { node: <Shield rotation={[0, -0.35, 0]} />, cam: [0, 1.1, 3.6], target: [0, 0.85, 0] },
+  photocopier: { node: <Photocopier rotation={[0, -0.55, 0]} />, cam: [0, 1.7, 5.0], target: [0, 0.95, 0] },
+  toner: { node: <TonerBottle rotation={[0, -0.45, 0]} position={[0, 0.17, 0]} />, cam: [0, 0.9, 2.6], target: [0, 0.12, 0] },
+  "toner-set": { node: <TonerSet rotation={[0, -0.5, 0]} />, cam: [0, 1.4, 3.2], target: [0, 0.1, 0] },
+  cartridge: { node: <Cartridge rotation={[0, -0.5, 0]} />, cam: [0, 1.1, 2.6], target: [0, 0.2, 0] },
+  "software-cad": { node: <Monitor rotation={[0, -0.35, 0]} variant="cad" />, cam: [0, 1.3, 4.0], target: [0, 1.0, 0] },
+  "software-creative": { node: <Monitor rotation={[0, -0.35, 0]} variant="creative" />, cam: [0, 1.3, 4.0], target: [0, 1.0, 0] },
 };
 
 export function StudioCanvas({ model }: { model: string }) {

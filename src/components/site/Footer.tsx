@@ -21,7 +21,7 @@ export function Footer({ settings, dict, categories, services }: { settings: Set
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-60" />
       <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full bg-brand-blue/20 blur-3xl" />
       <div className="container-x relative grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-12">
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-3">
           <Image src="/brand/logo-reverse.png" alt="MM Business Solution" width={1226} height={639} className="h-14 w-auto" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed">
             Bangladesh-based IT products supplier and technology solutions provider — computers, networking, servers, security and the professional implementation that ties them together.
@@ -36,11 +36,11 @@ export function Footer({ settings, dict, categories, services }: { settings: Set
         </div>
         <FooterCol title="Quick links" links={[["/about", dict.nav.about], ["/products", dict.nav.products], ["/solutions", dict.nav.solutions], ["/brands", dict.nav.brands], ["/projects", dict.nav.projects], ["/news", dict.nav.news], ["/contact", dict.nav.contact]]} className="lg:col-span-2" />
         <FooterCol title="Products" links={categories.slice(0, 7).map((x) => [`/products?category=${x.slug}`, x.name])} className="lg:col-span-2" />
-        <FooterCol title="Services" links={services.map((x) => [`/solutions/${x.slug}`, x.title])} className="lg:col-span-2" />
-        <div className="lg:col-span-2">
+        <FooterCol title="Services" links={[...services.slice(0, 6).map((x) => [`/solutions/${x.slug}`, x.title]), ...(services.length > 6 ? [["/solutions", "All services →"]] : [])]} className="lg:col-span-2" />
+        <div className="lg:col-span-3">
           <h3 className="text-sm font-bold text-white">Contact</h3>
           <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-glow" />{c.address}</li>
+            <li className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-glow" /><span className="whitespace-pre-line">{c.address}</span></li>
             <li><a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className="flex gap-2 hover:text-white"><Phone className="mt-0.5 h-4 w-4 shrink-0 text-glow" />{c.phone}</a></li>
             <li><a href={`mailto:${c.email}`} className="flex gap-2 break-all hover:text-white"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-glow" />{c.email}</a></li>
             {wa && <li><a href={wa} target="_blank" rel="noopener noreferrer" className="flex gap-2 hover:text-white"><WhatsappIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#25D366]" />WhatsApp</a></li>}

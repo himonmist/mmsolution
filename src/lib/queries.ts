@@ -11,11 +11,17 @@ export const productCardSelect = {
 } satisfies Prisma.ProductSelect;
 export type ProductCardData = Prisma.ProductGetPayload<{ select: typeof productCardSelect }>;
 
-export const getCategories = cache(() =>
-  prisma.category.findMany({
+export const getCategories = cache(async () => {
+  const rows = await prisma.category.findMany({
     where: { isPublished: true, parentId: null }, orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { products: { where: { isPublished: true } } } }, children: { where: { isPublished: true }, orderBy: { sortOrder: "asc" } } },
-  }));
+    include: {
+      _count: { select: { products: { where: { isPublished: true } } } },
+      children: { where: { isPublished: true }, orderBy: { sortOrder: "asc" }, include: { _count: { select: { products: { where: { isPublished: true } } } } } },
+    },
+  });
+  // A parent's count includes products filed under its subcategories.
+  return rows.map((c) => ({ ...c, _count: { products: c._count.products + c.children.reduce((n, k) => n + k._count.products, 0) } }));
+});
 
 export const getBrands = cache(() => prisma.brand.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }));
 export const getServices = cache(() => prisma.service.findMany({ where: { isPublished: true }, orderBy: { sortOrder: "asc" } }));

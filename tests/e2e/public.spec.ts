@@ -53,3 +53,44 @@ test("sitemap and robots", async ({ request }) => {
   const rb = await (await request.get("/robots.txt")).text();
   expect(rb).toContain("Disallow: /admin");
 });
+
+test("official contact details are shown", async ({ page }) => {
+  await page.goto("/contact");
+  await expect(page.getByText("+88 01866208620").first()).toBeVisible();
+  await expect(page.getByText("info@mmbusinesssolution.com").first()).toBeVisible();
+  await expect(page.getByText(/261\/3\/B, West Agargaon Road/).first()).toBeVisible();
+  await expect(page.locator('a[href^="https://wa.me/8801866208620"]').first()).toBeAttached();
+});
+
+test("Canon toner range: subcategory, compatibility and inquiry", async ({ page }) => {
+  await page.goto("/products?category=printers-scanners");
+  await expect(page.getByRole("link", { name: /Toner & Cartridges/ }).first()).toBeVisible(); // subcategory listed under parent
+  await expect(page.getByRole("link", { name: "Canon NPG-88 Toner" }).first()).toBeVisible(); // parent includes sub-category products
+  await page.goto("/products/canon-npg-51-toner");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Canon NPG-51 Toner");
+  await expect(page.getByText("imageRUNNER 2525 / 2525i")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Request Product Inquiry" })).toBeVisible();
+});
+
+test("software products and new services are published", async ({ page }) => {
+  await page.goto("/products?brand=autodesk");
+  await expect(page.getByRole("link", { name: "Autodesk AutoCAD" }).first()).toBeVisible();
+  await page.goto("/products?brand=adobe");
+  await expect(page.getByRole("link", { name: "Adobe Creative Cloud" }).first()).toBeVisible();
+  await page.goto("/solutions");
+  for (const s of ["Software Licensing & Solutions", "Printing & Document Solutions", "Audio-Visual & Video Conferencing", "Cloud, Email & Backup", "IT Maintenance & AMC"]) {
+    await expect(page.getByRole("heading", { name: s })).toBeVisible();
+  }
+});
+
+for (const reducedMotion of ["reduce", "no-preference"] as const) {
+  test(`homepage hydrates without errors (reduced motion: ${reducedMotion})`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (m) => { if (m.type() === "error" && !/WebGL|GPU/.test(m.text())) errors.push(m.text()); });
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    expect(errors).toEqual([]);
+  });
+}

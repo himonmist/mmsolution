@@ -5,7 +5,9 @@ import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
 const base = process.argv[2] ?? "http://localhost:3000";
-const models = ["laptop", "laptop-graphite", "desktop", "tower", "monitor", "components", "printer", "accesspoint", "server", "rack", "switch", "router", "camera", "accessories", "ups", "shield"];
+const only = process.argv[3] ? process.argv[3].split(",") : null;
+const allModels = ["laptop", "laptop-graphite", "desktop", "tower", "monitor", "components", "printer", "accesspoint", "server", "rack", "switch", "router", "camera", "accessories", "ups", "shield", "photocopier", "toner", "toner-set", "cartridge", "software-cad", "software-creative"];
+const models = only ?? allModels;
 await mkdir("public/media/studio", { recursive: true });
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const page = await browser.newPage({ viewport: { width: 900, height: 700 }, deviceScaleFactor: 1 });

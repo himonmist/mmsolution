@@ -27,9 +27,9 @@ export const DEFAULT_SETTINGS: Settings = {
   contact: {
     companyName: "MM Business Solution",
     email: "info@mmbusinesssolution.com",
-    phone: "+880 1XXX-XXXXXX",
-    whatsapp: "",
-    address: "Dhaka, Bangladesh",
+    phone: "+88 01866208620",
+    whatsapp: "8801866208620",
+    address: "261/3/B, West Agargaon Road,\nOli Market, Mirpur,\nDhaka-1216.",
     hours: "Saturday – Thursday, 9:30 AM – 7:00 PM",
     mapEmbedUrl: "",
   },

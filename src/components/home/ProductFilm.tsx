@@ -2,7 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { motion, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { useReducedMotionSafe } from "@/components/ui/useReducedMotionSafe";
 import { ArrowRight } from "lucide-react";
 
 /**
@@ -62,13 +63,13 @@ function Scene({ i, p, s }: { i: number; p: MotionValue<number>; s: (typeof SCEN
 
 export function ProductFilm() {
   const ref = useRef<HTMLElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const bar = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   if (reduce) {
     return (
-      <section className="bg-ink py-20">
+      <section ref={ref} className="bg-ink py-20">
         <div className="container-x grid gap-6 md:grid-cols-3">
           {SCENES.map((s) => (
             <Link key={s.img} href={s.cta.href} className="group overflow-hidden rounded-3xl bg-ink-2">

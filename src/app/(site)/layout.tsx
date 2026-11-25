@@ -15,7 +15,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const org = {
     "@context": "https://schema.org", "@type": "Organization", name: c.companyName, url: siteUrl(), logo: absUrl("/brand/logo.png"),
     slogan: "Smarter IT | Better Business", email: c.email, telephone: c.phone,
-    address: { "@type": "PostalAddress", streetAddress: c.address, addressCountry: "BD" },
+    address: { "@type": "PostalAddress", streetAddress: c.address.replace(/\s*\n\s*/g, " "), addressLocality: "Dhaka", postalCode: "1216", addressCountry: "BD" },
     sameAs: [settings.social.facebook, settings.social.linkedin, settings.social.youtube].filter(isSafeUrl),
   };
   return (

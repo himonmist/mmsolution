@@ -110,6 +110,15 @@ export function FeaturedSection({ products, iconFor }: { products: ProductCardDa
   );
 }
 
+/** First two cards are wide; the rest fill rows of three, widening the last row so it never leaves gaps. */
+function serviceSpan(i: number, n: number) {
+  if (i < 2) return "lg:col-span-3";
+  const rest = n - 2, k = i - 2, lastRow = rest % 3, inLast = k >= rest - lastRow;
+  if (inLast && lastRow === 1) return "lg:col-span-6";
+  if (inLast && lastRow === 2) return "lg:col-span-3";
+  return "lg:col-span-2";
+}
+
 type Svc = { id: string; title: string; slug: string; summary: string | null; icon: string | null; image: string | null; features: string[] };
 export function ServicesSection({ services }: { services: Svc[] }) {
   return (
@@ -122,7 +131,7 @@ export function ServicesSection({ services }: { services: Svc[] }) {
           action={<Link href="/solutions" className="btn btn-ghost">All solutions <ArrowRight className="h-4 w-4" /></Link>} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           {services.map((s, i) => (
-            <Reveal key={s.id} delay={i * 0.06} className={i < 2 ? "lg:col-span-3" : "lg:col-span-2"}>
+            <Reveal key={s.id} delay={Math.min(i, 6) * 0.06} className={serviceSpan(i, services.length)}>
               <Link href={`/solutions/${s.slug}`} className="group glass relative flex h-full flex-col overflow-hidden rounded-3xl p-7 transition hover:border-glow/40 hover:bg-white/[0.09]">
                 {s.image && i < 2 && (
                   <div className="absolute inset-0 opacity-25 transition duration-700 group-hover:scale-105 group-hover:opacity-35">

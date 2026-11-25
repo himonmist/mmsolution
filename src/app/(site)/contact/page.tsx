@@ -32,7 +32,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
             ].map(({ I, l, v, h }) => (
               <div key={l} className="card flex gap-4 p-5">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue"><I className="h-5 w-5" /></span>
-                <div><p className="text-xs font-bold uppercase tracking-wider text-slate">{l}</p>{h ? <a href={h} className="mt-1 block break-all font-bold text-ink hover:text-brand-blue">{v}</a> : <p className="mt-1 font-bold text-ink">{v}</p>}</div>
+                <div><p className="text-xs font-bold uppercase tracking-wider text-slate">{l}</p>{h ? <a href={h} className="mt-1 block break-all font-bold text-ink hover:text-brand-blue">{v}</a> : <p className="mt-1 whitespace-pre-line font-bold text-ink">{v}</p>}</div>
               </div>
             ))}
             {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn w-full bg-[#25D366] text-white"><WhatsappIcon className="h-5 w-5" />Chat on WhatsApp</a>}
